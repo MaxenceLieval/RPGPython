@@ -2,7 +2,6 @@ from random import randint
 from Character import Character
 import os
 
-
 class Game:
     def __init__(self):
         self.close = False
@@ -87,7 +86,7 @@ class Game:
             action = input().strip()
 
             if action == "1":
-                attack_damage = randint(1, self.character.strength)
+                attack_damage = randint(1, max(1, self.character.strength))
                 goblin_hp -= attack_damage
                 print(f"You attack the goblin and deal {attack_damage} damage!")
             elif action == "2":
@@ -104,12 +103,9 @@ class Game:
 
             if self.character.hp <= 0:
                 print("\nYou have been defeated by the goblin!")
-                self.close = True
-                break
             elif goblin_hp <= 0:
                 print("\nYou have slain the goblin! Victory is yours!")
                 self.character.xp += 10
-                break
 
     def talk_to_goblin(self):
         print("\nYou try to speak with the goblin.")
@@ -133,6 +129,7 @@ class Game:
             self.fight_goblin()
         else:
             print("The goblin isn't interested in your nonsense!")
+            self.fight_goblin()
 
     def run_away(self):
         print("\nYou turn and sprint back toward the dungeon entrance. You manage to escape safely.")
