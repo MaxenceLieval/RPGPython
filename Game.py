@@ -1,6 +1,5 @@
 from random import randint
 from time import sleep
-
 from Character import Character
 import os
 
@@ -8,6 +7,8 @@ class Game:
     def __init__(self):
         self.close = False
         self.character = None
+        self.current_state = "playing"
+        self.previous_state = None
         self.clear = lambda: os.system('cls')
         self.history = []
 
@@ -38,8 +39,8 @@ class Game:
         print(f"Your charisma bonus is: {charisma_bonus}.")
         print(f"Good luck, {name}. This world is just waiting for you.")
 
-        self.character = Character(name, 10, 1, 0,0, strength_bonus, dexterity_bonus, constitution_bonus, intelligence_bonus, wisdom_bonus, charisma_bonus)
-
+        self.character = Character(name, 10, 1, 0, 0, strength_bonus, dexterity_bonus, constitution_bonus,
+                                   intelligence_bonus, wisdom_bonus, charisma_bonus)
         self.start_game()
 
     def start_game(self):
@@ -96,8 +97,10 @@ class Game:
 ░░░░░░░░░░░░▒▒▒▒░░░░░░░░▒▒▒░░▒░░░░░░▒▒▒▒▒░░░▒▒░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒░▒▒░░░░░░▒░░░░░░▒▒▒▒░░░░░░░
 ░░░░░░░░░░░░░░░░░░░░░▒▒▒▒░░▒▒▒░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒░░░▒░░░▒░░▒░░░░░
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░▒▒░▒░░░░░░░░▒░░░░░
-            """
-            "\nYou are standing at the entrance of a dark and eerie dungeon. You feel a cold breeze coming from inside.")
+            """)
+        print("""
+You are standing at the entrance of a dark and eerie dungeon.
+You feel a cold breeze coming from inside.""")
         print("Do you want to enter the dungeon? (Yes/No)")
         command = input().strip().lower()
 
@@ -210,7 +213,9 @@ class Game:
                 self.character.hp -= goblin_attack_damage
                 print(f"The goblin attacks, but you defend yourself. You take {goblin_attack_damage} damage.")
             else:
-                print("Invalid action. The goblin takes advantage of your hesitation!")
+                self.character.hp -= goblin_attack
+                print(f"Invalid action. The goblin takes advantage of your hesitation! You take {goblin_attack} damage.")
+
 
             if goblin_hp > 0:
                 print(f"\nThe goblin attacks you! You take {goblin_attack} damage.")
@@ -223,6 +228,8 @@ class Game:
                 self.character.xp += 10
                 self.character.gold += 5
                 print("You gained 10 XP points and 5 gold coins")
+                self.continue_dungeon()
+
 
     def talk_to_goblin(self):
         print("\nYou try to speak with the goblin.")
@@ -251,6 +258,39 @@ class Game:
     def run_away(self):
         print("\nYou turn and sprint back toward the dungeon entrance. You manage to escape safely.")
         print("For now, the dungeon will have to wait...")
+
+    def continue_dungeon(self):
+        self.clear_console()
+        print("\nYou continue deeper into the dungeon and encounter a locked door with a complex mechanism.")
+        print("You need to make a skill check to see if you can open the door.")
+        print("This will test your Dexterity and Intelligence.")
+
+        roll = randint(1, 20)
+        dexterity_check = roll + self.character.dexterity_bonus
+        intelligence_check = roll + self.character.intelligence_bonus
+
+        dc = 15
+
+        print(f"\nYou roll a d20 and get: {roll}")
+        print(f"Your Dexterity check result is: {dexterity_check}")
+        print(f"Your Intelligence check result is: {intelligence_check}")
+
+        if dexterity_check >= dc or intelligence_check >= dc:
+            print("\nYou successfully pick the lock and open the door! You proceed further into the dungeon.")
+        else:
+            print("\nYou fail to open the door. The lock mechanism remains unyielding.")
+            print("You can either try again or turn back.")
+            print("1. Try again")
+            print("2. Turn back")
+
+            choice = input("What do you want to do? (1/2): ").strip()
+            if choice == "1":
+                self.continue_dungeon()
+            elif choice == "2":
+                print("\nYou decide to turn back to the dungeon entrance.")
+            else:
+                print("Invalid choice. The dungeon waits for your decision.")
+
 
     def enter_village(self):
         self.clear_console()
@@ -345,7 +385,7 @@ class Game:
         print("3. Rest at the inn")
         print("4. Leave the village")
 
-        choice = input("What do you want to do? (1/2/3/4): ")
+        choice = input("What do you want to do? (1/2/3/4): ").strip()
 
         if choice == "1":
             self.visit_shop()
@@ -410,7 +450,7 @@ class Game:
                 print(f"{index}. Talk to the {villager['name']}")
             print(f"{len(villagers) + 1}. Return to the village entrance")
 
-            choice = input("Who do you want to talk to? (1/2/3/...): ")
+            choice = input("Who do you want to talk to? (1/2/3): ")
 
             if choice in [str(i) for i in range(1, len(villagers) + 1)]:
                 selected_villager = villagers[int(choice) - 1]
@@ -420,7 +460,7 @@ class Game:
                 input("\nPress Enter to continue...")
             elif choice == str(len(villagers) + 1):
                 print("You return to the village entrance.")
-                break
+                self.enter_village()
             else:
                 print("Invalid choice. Please try again.")
                 input("\nPress Enter to continue...")
@@ -428,9 +468,12 @@ class Game:
     def check_input(self):
         print("\nWhat would you like to do? (Type 'Help' for options)")
         command = input().strip().lower()
+
         if command == "stats":
-            self.clear_console()
-            self.show_stats()
+            self.previous_state = self.current_state
+            self.current_state = "stats"
+            self.display_stats()
+            self.current_state = self.previous_state
         elif command == "help":
             self.clear_console()
             self.show_help()
@@ -440,30 +483,28 @@ class Game:
         else:
             print("Unknown command. Type 'Help' to see a list of available commands.")
 
-    def show_stats(self):
-        if self.character:
-            print(f"Name: {self.character.name}")
-            print(f"HP: {self.character.hp}")
-            print(f"Level: {self.character.level}")
-            print(f"XP: {self.character.xp}")
-            print(f"Gold: {self.character.gold}")
-            print(f"Strength: {self.character.strength_bonus}")
-            print(f"Dexterity: {self.character.dexterity_bonus}")
-            print(f"Constitution: {self.character.constitution_bonus}")
-            print(f"Intelligence: {self.character.intelligence_bonus}")
-            print(f"Wisdom: {self.character.wisdom_bonus}")
-            print(f"Charisma: {self.character.charisma_bonus}")
-            print("\nType 'Return' to go back to the game.")
+    def display_stats(self):
+        self.clear_console()
+        print(f"Name: {self.character.name}")
+        print(f"HP: {self.character.hp}")
+        print(f"Level: {self.character.level}")
+        print(f"XP: {self.character.xp}")
+        print(f"Gold: {self.character.gold}")
+        print(f"Strength: {self.character.strength_bonus}")
+        print(f"Dexterity: {self.character.dexterity_bonus}")
+        print(f"Constitution: {self.character.constitution_bonus}")
+        print(f"Intelligence: {self.character.intelligence_bonus}")
+        print(f"Wisdom: {self.character.wisdom_bonus}")
+        print(f"Charisma: {self.character.charisma_bonus}")
+        print("\nType 'Return' to go back to the previous state.")
 
-            while True:
-                return_command = input().strip().lower()
-                if return_command == "return":
-                    self.clear_console()
-                    return
-                else:
-                    print("Invalid command. Type 'Return' to go back.")
-        else:
-            print("Character not initialized.")
+        while True:
+            command = input(">").strip().lower()
+            if command == "return":
+                self.clear_console()
+                return
+            else:
+                print("Invalid command. Type 'Return' to go back.")
 
     def show_help(self):
         print("Available commands:")
