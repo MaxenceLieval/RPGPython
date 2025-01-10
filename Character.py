@@ -1,5 +1,5 @@
 class Character:
-    def __init__(self,name,hp,level,xp,gold,strength,dexterity,constitution,intelligence,wisdom,charisma):
+    def __init__(self, name, hp, level, xp, gold, strength, dexterity, constitution, intelligence, wisdom, charisma):
         self.name = name
         self.hp = hp
         self.level = level

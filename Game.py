@@ -1,6 +1,8 @@
 from random import randint
 from time import sleep
+from Tools.scripts.findlinksto import visit
 from Character import Character
+from Classes import *
 import os
 
 class Game:
@@ -21,26 +23,46 @@ class Game:
         print("What is your name?")
         name = input()
 
+        game_bonuses = {
+            "strength": randint(-5, 5),
+            "dexterity": randint(-5, 5),
+            "constitution": randint(-5, 5),
+            "intelligence": randint(-5, 5),
+            "wisdom": randint(-5, 5),
+            "charisma": randint(-5, 5)
+        }
+
+        print("Choose your class:")
+        print("1. Warrior")
+        print("2. Cleric")
+        print("3. Mage")
+        choice = input("Enter the number of your choice: ")
+
+        if choice == "1":
+            self.character = Warrior(name, game_bonuses)
+            print(f"Welcome, {name} the Warrior!")
+        elif choice == "2":
+            self.character = Cleric(name, game_bonuses)
+            print(f"Welcome, {name} the Cleric!")
+        elif choice == "3":
+            self.character = Mage(name, game_bonuses)
+            print(f"Welcome, {name} the Mage!")
+        else:
+            print("Invalid choice. Defaulting to Warrior.")
+            self.character = Warrior(name, game_bonuses)
+
         self.clear_console()
-        print("You start with 10 HP at level 1 and 0 gold coins. Type 'Stats' at any time to check your stats.")
+        print(f"You start with {self.character.hp} HP at level {self.character.level} and {self.character.gold} gold coins. Type 'Stats' at any time to check your stats.")
 
-        strength_bonus = randint(-5, 5)
-        dexterity_bonus = randint(-5, 5)
-        constitution_bonus = randint(-5, 5)
-        intelligence_bonus = randint(-5, 5)
-        wisdom_bonus = randint(-5, 5)
-        charisma_bonus = randint(-5, 5)
+        print(f"\nYour stats are:\n"
+              f"HP: {self.character.hp}\n"
+              f"Strength: {self.character.strength_bonus}\n"
+              f"Dexterity: {self.character.dexterity_bonus}\n"
+              f"Constitution: {self.character.constitution_bonus}\n"
+              f"Intelligence: {self.character.intelligence_bonus}\n"
+              f"Wisdom: {self.character.wisdom_bonus}\n"
+              f"Charisma: {self.character.charisma_bonus}")
 
-        print(f"Your strength bonus is: {strength_bonus}.")
-        print(f"Your dexterity bonus is: {dexterity_bonus}.")
-        print(f"Your constitution bonus is: {constitution_bonus}.")
-        print(f"Your intelligence bonus is: {intelligence_bonus}.")
-        print(f"Your wisdom bonus is: {wisdom_bonus}.")
-        print(f"Your charisma bonus is: {charisma_bonus}.")
-        print(f"Good luck, {name}. This world is just waiting for you.")
-
-        self.character = Character(name, 10, 1, 0, 0, strength_bonus, dexterity_bonus, constitution_bonus,
-                                   intelligence_bonus, wisdom_bonus, charisma_bonus)
         self.start_game()
 
     def start_game(self):
@@ -106,9 +128,12 @@ You feel a cold breeze coming from inside.""")
 
         if command == "yes":
             self.enter_dungeon()
-        else:
+        elif command == "no":
             print("You decide not to enter the dungeon. Maybe next time...")
             self.enter_village()
+        else:
+            print("Invalid choice, type 'yes' or 'no'")
+            self.start_game()
 
     def enter_dungeon(self):
         self.clear_console()
@@ -187,8 +212,10 @@ You feel a cold breeze coming from inside.""")
             self.talk_to_goblin()
         elif choice == "3":
             self.run_away()
+
         else:
             print("Invalid choice. The goblin growls louder!")
+            self.random_encounter()
 
     def fight_goblin(self):
         print("\nYou draw your weapon and prepare for combat!")
@@ -213,8 +240,7 @@ You feel a cold breeze coming from inside.""")
                 self.character.hp -= goblin_attack_damage
                 print(f"The goblin attacks, but you defend yourself. You take {goblin_attack_damage} damage.")
             else:
-                self.character.hp -= goblin_attack
-                print(f"Invalid action. The goblin takes advantage of your hesitation! You take {goblin_attack} damage.")
+                print(f"Invalid action. The goblin takes advantage of your hesitation!")
 
 
             if goblin_hp > 0:
@@ -244,11 +270,15 @@ You feel a cold breeze coming from inside.""")
         if choice == "1":
             if self.character.charisma_bonus > 0:
                 print("You convince the goblin that you're not worth the trouble. The goblin grumbles and walks away.")
+                print("You continue along the path the goblin came from.")
+                self.continue_dungeon()
             else:
                 print("Your words have no effect. The goblin growls angrily!")
                 self.fight_goblin()
         elif choice == "2":
             print("You offer the goblin some of your food. It sniffs it, seems satisfied, and leaves you alone.")
+            print("You continue along the path the goblin came from.")
+            self.continue_dungeon()
         elif choice == "3":
             self.fight_goblin()
         else:
@@ -263,20 +293,23 @@ You feel a cold breeze coming from inside.""")
         self.clear_console()
         print("\nYou continue deeper into the dungeon and encounter a locked door with a complex mechanism.")
         print("You need to make a skill check to see if you can open the door.")
-        print("This will test your Dexterity and Intelligence.")
+        print("This will test your Intelligence.")
+        print("Rolling...")
+        sleep(2)
 
         roll = randint(1, 20)
-        dexterity_check = roll + self.character.dexterity_bonus
-        intelligence_check = roll + self.character.intelligence_bonus
+        intelligence_bonus = max(-5, min(5, self.character.intelligence_bonus))
 
-        dc = 15
+        intelligence_check = roll + intelligence_bonus
 
-        print(f"\nYou roll a d20 and get: {roll}")
-        print(f"Your Dexterity check result is: {dexterity_check}")
+        dc = 17
+
         print(f"Your Intelligence check result is: {intelligence_check}")
 
-        if dexterity_check >= dc or intelligence_check >= dc:
+        if intelligence_check >= dc:
             print("\nYou successfully pick the lock and open the door! You proceed further into the dungeon.")
+            input("\nPress Enter to continue...")
+            self.treasure_room()
         else:
             print("\nYou fail to open the door. The lock mechanism remains unyielding.")
             print("You can either try again or turn back.")
@@ -290,7 +323,221 @@ You feel a cold breeze coming from inside.""")
                 print("\nYou decide to turn back to the dungeon entrance.")
             else:
                 print("Invalid choice. The dungeon waits for your decision.")
+                self.continue_dungeon()
 
+    def treasure_room(self):
+        self.clear_console()
+        print("""
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▓██████████████████████████████████████████████████████████████████
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓█████▓▓▓▓▓█████████████████████████████████████████████████
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒░░▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒███████████████████████████████████████████████████
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓█▓▓▒▒█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░▒░░░░▓████▓███████████████████████████████████████████████
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒█▓▓▓▓▒█▓▓▓▓▓▒▒▒░▒▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒░░░░░▒▒▓████████▓█████████████████████████████████████████████
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░▒▒▒▒░▓▓▒▒▒▒░░▒▒██▒▒░▒▒▒▒▒░░░░▒▒▒▓▓▓▓▓▓▓▓▓▓███████▓▓▓▓██████████████████████████████████████████
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒░░░░░░░░▒▓▒▓█▓▓▓▒▒▒▒▓▓▓▒▒▒▓▓▓▓▓▓▓▓███████████▓▓▓▓▓▓██████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓████▓▓▓▓▓███████▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒░░▒▒▒▒▒▒▓▒▒▒▒░░░░▒▓▓▓▒▒░░░▒▒▓▓▓▓▓▓▓▓▓▓████████████████████████████▓▓▓▓▓▓██████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░░░▒▓▓▒░░░░░░░░░░▒▓▓▓▓▓▓▓▓▓▓▓▓▓████████████████████████████████████████▓▓▓▓▓███████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░░▒▒▒▒░▒▒▒▓▓▓▓▓████████████████████████████████████████████████████████████▓▓▓▓██████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓██████████████████████████████████████████████████████████████████▓▓▓▓▓▓▓▓▓▓█████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▒▒▒▒▒▒▒▒▓▓▒▓█▓▓▓▓▓▓▓████████████████████████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▒▒▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒█▓▓▓▓▓▓▓▓▓▓███████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓█████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓█████▓▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒█████▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▒
+▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░▒▒░░░▒░░░░░▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓███▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓█████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▓▒▒
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓█████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▒
+░░▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▓▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓▓▒▓▓▓▓▓▓▓▓▓▓▒▓▓██████▒▒░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▒
+▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓░░▒▓▓▓▓▓▒▒▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒░░░░▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███▓▒░░░░░░░░░░░░▒▒▒▒▒▒▒▒░░▒▒▒▒▒▒▓▓▓▓▓▓▒
+▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░▒▒▒░░▒▒▒░░░░░░░░░░░░░░░░░░▒▒▓▓▓▓▓▓▓▓▓▓▒░░░▒▓▓▓▓▓▓▒▒▒▒▓▓▒▓▒░▒▒▒▓▒▒▓▒▒▒▓▓▓▓▒▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███▓░░░░░░░░░░░░░░░░░░░░▒▒▒▒░▒▓▓▓▓▓▓▓▒
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░▒▒▓▒▒▓▓▓▓▓▒░▒▓▓▒▓▒▒▓▓▓▒▒▒▒▒▒░░░░▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓█▓████▒░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░▒▒▓▓▓▒░░░░▒▓▓▒▒▒▓▓▒▒▒▒▒░░░░▒░▒▒▓▓█▓▓▒▓██▓▓▓▓▓███▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓██████▒░░░░░░░░░░░░░░░░▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒░░░░░░░░░░░▒▒▓░░░░▒▒▒▓▒▒▓▓▓▒░▒░░░░▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▓▓▓█▓▓▓▓▒▓▒▓▓▓▓▓▓▓▓▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███▓▓▒░░░░░░░░░░░░░░▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▓▒▒▒▒▓▓▓▒▒▒▒▒░▒▒░░░░░░▒▒▓▓█▓▓▓██▓▓▒▒▓▓▓▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▒▓▒▒▒▒▓▓▓▓▓▓▓▓▓█████▒░░░░░░░░░░░░░▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░▒▒░░░░░░░░░░░░░▒▒▒░░▒▒▓▓▓▒▒▒▒░▓▒▒▒▒▒▒▒░░░░▒░▒░▓▓▓▓▓▓▓▓▓▓▓██▓▓▒▓▒▓▓▒▒▒▒▒▒▒▓▓▓▓▓▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓██▓█▓▒░░░░░░░▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░▒▒▒▒▒▒░░░░░░░░░░▒▒▒▒▒▒▒▒▓▓▓▒▒▒▒▒▒▒▒░▓▒▓▒▒▒░░▒▒░▒▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓█▓▓▒▒▒▒░░░▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░░░░░░▒░░░░░░░░░▒▒▒▒▒░░░░░░░░░▒▒▒▒▓▒▒░▒▒▒▒░░░▓▓▒▒▒▒░▓▒▒▒▒▒▒▒▒▒░▓▓▒▒▒▒▒▒▒▓▒▒▒▓▓█▒▓▓▓▓▒▒▒▒▒▓▓▓▓███▓▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▓▓▓▓▓▒░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒▓▓▓▓▓▓▓▓▓▓
+▒▒▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒░░▒▒▒▓▓▓▓▓▒▒▒▒▒▒▓▓▒▒░░▒▓▓░▒▒▒▒▒▒▒▒▓▒▓▓▓▒▒░░░░░░░▒▓▓█▓▓▓▓▓▓▒▒▒▒▓▓█████▓▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░▒░░░░▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▓▓▒▒▒░▒▒▒░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓█▓▓▓█▓█▓▓████████▓▓█▓▓▒░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░▒▒▒▒▒▒▒▒▒▓█▓▓▓▒▒▒▓▓▒▒▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒░░▒▒░░░░▒░▓██▓▓▓▓▓░░▒▒▒▒▒▒▒▓██████████████████▓█████████▓▓▓▓▒░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒██▓▓▓▓▓▓██▓▓▓▓▒▒▒▒▒░░▒▓▒░▓▒░░▒▒▒░░▒▒▒▒▒▓██▓▓▓▓▓▒░▒▒▒▒░▒▒▓█▓████████████████████████████▓▓░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▒
+▒▒▒▒▒░░▒░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓█▓▓▓▓▓▓▓▓▓▓▓▓▓██▒▒▒░▒▒▒░▒▓▓▒▒▒██▒▓▓██████▓▓▓▓▓▓▓▒▒▒▒░░░▒▓█▓▓████████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▒▒▒▒▒▒▒▒▒▒▒░░▒▒▒░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓█▓▓▓▒░▓▓▓▓▓▓▓▓▓██▓▒▒▒▒▒▓▓▒█▓▒▒█▓▒▒▒▒▓█▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░░▒▒▓█████████████████████████████▓█▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▓▓▓▓▓▓▒▒▒▒▒▓▓▓▓▓▓░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▓▓▓█▓▓▒▒▒▒▓▓▓▓▓▓▓▓██▓▒▓░░▒▓▓▒█▓▒▓█▓▒▒▒▒▓█▓▓▓▓▒▒▒▓▓▓▓▓▓▒▒▒▒▓▓▓█████████████████████████████▓▓▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒
+▓▓▓▓▓▓▓▓▒▒▒▒▓▓▓▓▓▒░░░░░░░▒░░░░░░░░░░░░▒▓▓▓█▓▒▒▒▒▓▓▓█▓▓▒████▓▓▓▒▒▓█▓▒█▒▒██▓▓▓▓▓▓█▓▓▓▓▒▒▒▒██▓▓▓▓▓▓▓▓▓▓███████████████████████████████▓▒▒▓▒░░░░▒▓▓▓▒░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▓▓▓▓▓▓▓▓▓▒▒▒░░░░░░░░░░▒▒▒▓▒▒░░░░░░░░░░░▓█▓█▓▓▒▓▓▓▓██▓▓▒▒▓██▓▓▒▓▒▒▓▓██▓▓██▓▓▒▒▒▓█▓▓▒░▒▒▒▒▓▓▓▓▓▓▓▓▒▓▓████████████████████████████████▓▓▓▓▓▒▒▒▓▓▓▓▓▓░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒░▒▓▓▓▓▓▓░░░░░░░░▒░░░▓▓▓█▓▓▒▒▓▓▓██▓▓▒▓▓██▓▓▓▓▓▓▓██▓▓███▓▓▒▒▓▓█▓▓▒▓▓▒▒██▓▓██▓▓▓▒▓▓▓███████████████████████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓
+▓▓▒▒▒▓▓▓▓▓▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▒░░░░░░░░░░░▓▓▓██▓▓▓▓▓███▓▓▒▓▓██▓▓▓▓▓▓▓▓▓████▓▓▓▓█▓▓█▓▓▓▒▓▓▓███████▓▓▒▓▓▓███████████████████████████████▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▒▒▒
+▓▓▓▒▒▓▒▒▒▒▒░▒▒▒▒▒▒▒▒▒▒▒▒▓▒▓▓▒▒░░░░░░▒▓▒▓▓▓████▓▓████▓▓▒▓▓███▓▓▓▓▓▓▓███▓▓▓▓▓▓▓▓▓█▓▓▓▓▒▒▒███████▓█▒▓▓▓███████████████████████████▓███▓▓█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▓▒▓▓▒▒▓▒▓▓▓▒▒▒░░▒▒▒▒▒▓▓▒▒▒░░░░░░░░░▒▓▓▒▒▒▓▒▓█████████▓▒▓▓█████▓▓▓█████▓▓▓▓▓▓▓▓▓██▓▓▓▓▒▓▓████████▓▓▓▓███████████████████████████████████▓▓▒▓▓▓▓▓▒▒▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▓▓▒▓▓▓
+▓▒▒▓▒▒▓▓▓▓▓▓▒▒▒▒▒▒▒▒▓▓▓▓▓▒░▒▒░▒▒▒▒▓▓▓▓▒▓▓▓▓▓▓█████████▒▓▓█▓▒▓▒▒▒▒▒▒▒▒▒▒▓██▓▓▓▓▓██▓▓▓▓▓██████████▓▓▓▓██████████████████████████████████▓▓▓▓▓▓▓▓█▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▓▓▓▓██▓▓▓▓
+▓█▓▓▓▓▓▓▓▓▒▒▒▒▒▒▓▓▒▒▒▓▓▓▓▓▒▒░▒▒▒▒░░░░▒▒▓▓▒▓▓▓▓████████▒▓▓█▓▓▒▓▓▓▓▓▒▒▒▒▒▓██▓▓▓▓▓██▓▓▓▓▓▓███▓▓███▓▒▓▓▓█▓▓██████████████████████████████▓▓▓▓▓▓▓▓▓▓██▓▓▓▓▓▓▓▓▓▓▓▓█▓▓██▓████▓▓
+▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▓▓▓▓▒▒▒▒▓▓▓▓▒░▒░▒▒░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓██▓▓▓▓▓██▓▓▓▓▓▓▓█████▓▒▓▓▓▓▓████████████████████████████████▓▓▓█▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▓█▓▓▓▓████████▓▓▓█
+▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▓▓▓▓▓▒▒▒▓▓▓▓▒▒▒▒▒▒░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▓▓▓▓▒▓▓▓█▓▓▓▓▓▓▓▓▓▓█▓▒▓▓▓▓▓▓▓████████████████████████████████▓▓▓▓▓▓▓▒▓▓▓▓███▓▓███████████████▓▓▓██
+▓▓▓▓▓▓▓▒▒▒▓▓▓▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░▒▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒░░▒▒▒▒▓▓▓▓▓██▓███████▓▓▓▓▒▓▓▓▓▓▓▓▓▓████▓█████████████████████████▓██▓▓▒▒▒▒▒▒▒▓▓███▓███▓▓▓▓████▓█████████
+▓▓▓▓▓▓▓▒▒▒▒▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░▒░▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▓▓▓▓▓▒▓███████████▓▓▓▓█▓▓▓▓██████████▓▓████████████████▓▓▓▓▓███▓▓▓████████████▓█████████████████
+█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░▒▒░▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓███▓▓███▓▓▓▓▓▓▓▓███▓▓▓▓▓▓▓▓█▓▓▓▓▓███████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▓▓█████████████████████████████
+██▓███▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▓▓▒░▒▒▒▒▒▒▓▓▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▒▓▓█▒▒▓▓▒▒▓▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓██▓▓▓▓▓▒▒▓▓▓▓▓▓▓███████▓▓▓▓▓████████████████▓██
+████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██████▓▓▓▓▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+█████▓███▓█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓██▓██████████▓▓▓▓▓▓▓▓███████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+█████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+████████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓███▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+        """)
+        print("\nYou find yourself in a grand room filled with glittering treasure!")
+        print("Gold coins, jewels, and ancient artifacts are scattered across the floor.")
+        print("However, something feels... off. The air is heavy, and you sense danger.")
+
+        print("\nWhat do you do?")
+        print("1. Take the treasure directly.")
+        print("2. Inspect the room for traps.")
+        print("3. Leave the treasure and exit the room.")
+
+        choice = input(">").strip()
+
+        if choice == "1":
+            self.take_treasure()
+        elif choice == "2":
+            self.inspect_room()
+        elif choice == "3":
+            print("\nYou decide it's better not to risk it and leave the treasure untouched for your safety.")
+            print("You return to the dungeon corridor.")
+        else:
+            print("\nInvalid choice. The treasure glimmers temptingly...")
+            self.treasure_room()
+
+    def take_treasure(self):
+        self.clear_console()
+        print("\nYou greedily reach for the treasure and fill your bag with gold and jewels.")
+        print("Suddenly, the ground beneath you trembles!")
+
+        trap_roll = randint(1, 20)
+        trap_dc = 12
+
+        print(f"\nYou roll a d20 for Dexterity to avoid the trap: {trap_roll}")
+        if trap_roll + self.character.dexterity_bonus >= trap_dc:
+            print("\nYou dodge just in time as arrows shoot out from the walls!")
+            print("You manage to escape the trap with the treasure in hand.")
+            self.collected_coin = randint(50, 100)
+            self.character.gold += self.collected_coin
+            print(f"You collected {self.collected_coin} gold coins.")
+            print("You decide to leave the dungeon with your money.")
+            self.leave_dungeon()
+        else:
+            print("\nYou fail to dodge! A series of arrows hit you.")
+            damage = randint(5, 10)
+            self.character.hp -= damage
+            print(f"You take {damage} damage! Your current HP is {self.character.hp}.")
+            self.collected_coin = randint(20, 30)
+            self.character.gold += self.collected_coin
+            print(f"You managed to collect {self.collected_coin} gold coins.")
+            if self.character.hp <= 0:
+                print("You succumb to your injuries... Game Over.")
+                self.close = True
+
+    def inspect_room(self):
+        self.clear_console()
+        print("\nYou carefully inspect the room for traps or hidden mechanisms.")
+
+        roll = randint(1, 20)
+        intelligence_check = roll
+        wisdom_check = roll
+        dc = 15
+
+        print(f"\nYou roll a d20: {roll}")
+
+        if intelligence_check >= dc or wisdom_check >= dc:
+            print("\nYou discover a hidden mechanism near the treasure pile.")
+            print("It seems to deactivate the traps. You safely collect the treasure!")
+            self.collected_coin = randint(50, 100)
+            self.character.gold += self.collected_coin
+            print(f"You collected {self.collected_coin} gold coins.")
+            print("You decide to leave the dungeon with your money.")
+            input("\nPress Enter to continue...")
+            self.leave_dungeon()
+        else:
+            print("\nYou fail to find anything. You decide to leave the treasure untouched.")
+            print("You return to the dungeon corridor.")
+
+            roll = randint(1, 20)
+            wisdom_check = roll
+            dc = 17
+            if wisdom_check <= dc:
+                print("You are ready to leave the dungeon but suddenly you see in the corner of you eye some sort of red sparkling.")
+                print("You get closer to the sparkling and see a big statue with rubies for eyes")
+                print("Suddenly the earth starts shaking and you see the statue's eyes glow when the statue starts to move")
+                print("You draw your weapon preparing for battle.")
+                input("\nPress Enter to continue...")
+                self.golem_fight()
+            else:
+                print("Your journey end here")
+                input("\nPress Enter to continue...")
+                self.leave_dungeon()
+
+    def golem_fight(self):
+        self.clear_console()
+        golem_hp = randint(25, 50)
+        golem_attack = randint(5, 15)
+        while self.character.hp > 0 and golem_hp > 0:
+            print(f"\nGolem HP: {golem_hp}")
+            print(f"Your HP: {self.character.hp}")
+            print("What do you do?")
+            print("1. Attack the golem")
+            print("2. Defend")
+            print("3. Pray")
+
+            action = input().strip()
+
+            if action == "1":
+                attack_damage = randint(1, max(1, self.character.strength_bonus))
+                golem_hp -= attack_damage
+                print(f"You attack the golem and deal {attack_damage} damage!")
+                input("\nPress Enter to continue...")
+            elif action == "2":
+                print("You brace yourself, ready to defend!")
+                golem_attack_damage = max(0, golem_attack - self.character.dexterity_bonus)
+                self.character.hp -= golem_attack_damage
+                print(f"The golem attacks, but you defend yourself. You take {golem_attack_damage} damage.")
+                input("\nPress Enter to continue...")
+            elif action == "3":
+                if isinstance(self.character, Cleric):
+                    print("Your prayers are heard! Divine energy fills the room!")
+                    heal_amount = randint(10, 20)
+                    self.character.hp = min(self.character.hp + heal_amount, 100)
+                    divine_damage = randint(50, 500)
+                    golem_hp -= divine_damage
+                    print(f"You heal yourself for {heal_amount} HP!")
+                    print(f"The golem takes {divine_damage} radiant damage from divine energy!")
+                    input("\nPress Enter to continue...")
+                else:
+                    print("Your prayers go unanswered...")
+                    input("\nPress Enter to continue...")
+
+            else:
+                print("Invalid action. The golem takes advantage of your hesitation!")
+
+            if golem_hp > 0:
+                print(f"\nThe golem attacks you! You take {golem_attack} damage.")
+                self.character.hp -= golem_attack
+                input("\nPress Enter to continue...")
+
+            if self.character.hp <= 0:
+                print("\nYou have been defeated by the golem!")
+                input("\nPress Enter to continue...")
+            elif golem_hp <= 0:
+                self.clear_console()
+                print("\nYou have slain the golem! Victory is yours!")
+                self.character.xp += 500
+                self.character.gold += 500
+                print("You gained 500 XP points and 500 gold coins")
+                input("\nPress Enter to continue...")
+                self.leave_dungeon()
+
+    def leave_dungeon(self):
+        self.clear_console()
+        print("\nYou leave the dungeon!")
+        print("Thank you for playing!")
+        print("Your final score is :")
+        print(f"level : {self.character.level}")
+        print(f"xp : {self.character.xp}")
+        print(f"gold : {self.character.gold}")
 
     def enter_village(self):
         self.clear_console()
@@ -395,6 +642,8 @@ You feel a cold breeze coming from inside.""")
             self.clear_console()
             print("You rest at the inn and regain your strength.")
             self.character.hp = min(self.character.hp + 5, 10)
+            sleep(1)
+            self.enter_village()
         elif choice == "4":
             self.clear_console()
             print("You leave the village and return to the dungeon entrance.")
@@ -426,8 +675,12 @@ You feel a cold breeze coming from inside.""")
             if self.character.gold >= item_price:
                 self.character.gold -= item_price
                 print(f"You bought a {item_name}!")
+                self.clear_console()
+                self.visit_shop()
             else:
                 print("You don't have enough gold to buy that.")
+                self.clear_console()
+                self.visit_shop()
         elif choice == "4":
             print("You leave the shop.")
             self.enter_village()
@@ -499,7 +752,7 @@ You feel a cold breeze coming from inside.""")
         print("\nType 'Return' to go back to the previous state.")
 
         while True:
-            command = input(">").strip().lower()
+            command = input().strip().lower()
             if command == "return":
                 self.clear_console()
                 return
@@ -516,3 +769,4 @@ You feel a cold breeze coming from inside.""")
     def update(self):
         while not self.close:
             self.check_input()
+
