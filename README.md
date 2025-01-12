@@ -1,5 +1,5 @@
 
-# RPGPython
+# RPGPython by Maxence Lieval
 
 ## Description
 
