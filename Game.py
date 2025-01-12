@@ -1,16 +1,12 @@
-from random import randint
 from time import sleep
-from Tools.scripts.findlinksto import visit
-from Character import Character
 from Classes import *
 import os
 
 class Game:
     def __init__(self):
+        self.collected_coin = None
         self.close = False
         self.character = None
-        self.current_state = "playing"
-        self.previous_state = None
         self.clear = lambda: os.system('cls')
         self.history = []
 
@@ -251,9 +247,11 @@ You feel a cold breeze coming from inside.""")
                 print("\nYou have been defeated by the goblin!")
             elif goblin_hp <= 0:
                 print("\nYou have slain the goblin! Victory is yours!")
-                self.character.xp += 10
+                self.character.xp += 20
                 self.character.gold += 5
                 print("You gained 10 XP points and 5 gold coins")
+                self.character.check_level_up()
+                input("\nPress enter to continue...")
                 self.continue_dungeon()
 
 
@@ -419,6 +417,7 @@ You feel a cold breeze coming from inside.""")
             self.character.gold += self.collected_coin
             print(f"You collected {self.collected_coin} gold coins.")
             print("You decide to leave the dungeon with your money.")
+            input("\nPress Enter to continue...")
             self.leave_dungeon()
         else:
             print("\nYou fail to dodge! A series of arrows hit you.")
@@ -464,6 +463,48 @@ You feel a cold breeze coming from inside.""")
                 print("You get closer to the sparkling and see a big statue with rubies for eyes")
                 print("Suddenly the earth starts shaking and you see the statue's eyes glow when the statue starts to move")
                 print("You draw your weapon preparing for battle.")
+                print("""
+                                         ░░ ░░░░░░░░░░░                                           
+                                 ░░░░░░░░░░░▒▒▒▒▒▒▒▓▓▒░░░  ░░░░░░░░░                              
+                            ░░░░▒▒▒▓▓▓▓▓▒▒▒▓▒▒▒▒▒▒▒▒▓█▓▓▓▒▒▒▒▒▒▒▒▒░░░░                            
+                         ░░░░▒▒▒▒▓▓▓▓███▒▒▒▒▓▒▒▓▓▓▒▓▓▓▓▓███▓▓▒▒▒▒▒▒▓▒░░░                          
+                         ░░▒▒▒▒▒▓▓▓████▓▓▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓█████▓▒▒▒▒▓▒▓▓▓░░░                        
+                       ░░░▓▒▒▒▒▓▓▓█████▓▓▓▒▒▒▓▓██▓▒▒▓▓████████▓▒▒▒▓▓▓▓█▓▒░░░░                     
+                    ░░░▒▒▒▓▓▒▒▒▓▓▓███▓██▓▒▓▓▓▓████▓▓███████████▓▒▒▒▓▓██▓▒▓▓░░                     
+                   ░░░▒▒▒▒▓▓▓▓▓██████▓▓█▓▒▓█▓▓█▒▓▓██▓███████████▓█████▓▒▒▓▓▓░                     
+                    ░░▒▒▒▒▒▓▓▓▓▓▓▓▓▓█████▓▒▒▓▓█▒▒▓▓█▓▓▓███████▓▓▓▓▓▓▒▒▒▓▓▓▓▓▒░░                   
+                    ░░▒▒▒▒▓▓▓▓▓▓▓▓▓▓█████▓▒▓▓▓▓▓▓███████████▓▒▒▓▓▓▒▒▒▒▒▓▓▓██▒░░                   
+                    ░░▒▓▒▒▒▓▓▓▓▓▓▓▓▓██████▓▒▒▒▒▒▓▓▓▓▓███████▓▒▒▓▓▒▒▒▒▒▓▓▓███▒░░                   
+                   ░░▒▒▓▓▓▒▓▓▓▓▓▓▓▓▓███████▓▒▒▒▓▓▓▓█████████▓▒▒▓▓▓▒▒▒▒▓▓███▓▓▒░                   
+                 ░░░▒▒▒▒▓█▓▓▓▓▓▓█████████▓▓███▓▓▓▓███████████▓▓▓▓▓▒▒▓▓███▓▓▒▓▓▒                   
+                 ░░▒▒▒▒▒▓▓██████████████▓▓██▓▒▓▓█▓▓█████████████▓▓▓▓███▓▒▒▒▓▓▓▓░░                 
+                 ░░▒▒▒▒▒▓▓█████████▓▓▓▓▓▓▓▓▓▓▓▓▓█▓▓▓███▓▓▓▓▓▓▓██▓▒▒▒▓▓▓▒▒▓▓▓▓▓▓░░                 
+                 ░▒▓▒▒▓▓███████████▓▒▒▒▒▓▓▒▓█████▓▓▓▒▒▒▒▒▒▓▓▓▓███▓▓▒▓▓▓▓▓▓▓████▓░░                
+               ░░░▒▒▓▓▓▓▓▓▓██████▒▓▓▒▓▓▓▓▓▓▓▓▓███▓▒▓▒▒▓▒▒▓▓▓▓▓██▒▓▓▓▓▓▒▒▒▒▓▓██▓▓░░                
+               ░░▒▒▒▒▒▒▓▓▓▓▓██▓░░░░▓▓▒▓▒▒▓▓▓▓▓▓▓██▓▒▒▓▓▒▓▓█▓▓█▓░░░░▒▓▒▒▒▒▒▒▒▓▓▓▓▓░                
+               ░░▒▒▒▒▒▓▓▓▓▓███▓░░  ░░▓▓▓▓▓▓▓▓▓▓▓██▓▓▒▒▒▒▓▓▓▓▓░░  ░░▒▓▓▒▒▒▒▒▒▓▓▓▓▓░                
+               ░░▒▒▒▒▒▒▓▓▓▓██▓▓▒░░  ░▒▓▓▓▓▓██████████▓▓▓▓████░░  ░░▒▒▒▓▒▓▓▒▒▓▓▓█▓░                
+               ░▒▒▒▒▒▒▓▓▓███▓▓▓░░░ ░░▒▓██████████████████████░░  ░░▒▒▓▓█▓▓▒▓▓▓███▒░               
+              ░░░▒▒▓▓▓▓████▓▓▓▓▒░░ ░░▒▓▓████████████████████▓░   ░░▒▒▒▓██▓▓██▓▓▓▓░                
+               ░░▒▒▒▒▓▓▓███▓▓█▓░░░ ░░▓▓██████████████████████▒░  ░░▒▓▓██▓▒▓▒▒▒▒▓▓░                
+               ░░▒▒▓▓▓▓▓▓█████░    ░▒▓██████████████████▓████▓░  ░░░▒▓▓▓▒▒▒▒▒▓▓▓▓░                 
+              ░░░▒▓▓▓▓██████▓█▒    ░▓███████████▓▓██▓▓███████▓░  ░░░▒▒▒█▓▓▓▓▓▓██▓░                
+               ░░░▓▒▒▓███▓▓▓▓▓░    ░▓███████▓███░░▓██▓███▓▓▓▓▓░  ░░░▒▒▓▓█▓▓▓▓▓██░░                
+               ░░▒▒▒▒▒▓▓██▓▓▓▓░   ░▒███████████░░░░████████▓▓▓▒░ ░░░▒▒▒▓█▓▒▒▒▓▓▓▓▒░               
+              ░░▒▒▒▓▓▓▓▓██▓▓▓▓░  ░░▓██████████░  ░░░▓█▓█▓▓▓▓▓▓▓░░░░░▒▒▒▓█▓▒▒▒▒▓▓▓▓░░░             
+              ░▒▓▒▒▒▓▓████▓██▒░  ░░▓████████▓░░     ░▓█▓▓▓▓▓█▓▓░░░ ░░▒▒▓▓█▒▒▒▒▒▓▓▓▒░░             
+              ░▒▒▓▒▓▓▓▓███▓██░   ░░▓█████████░     ░░▓████▓▓▓▓▓░░  ░░▒▒▓██▒▒▓▓▓▓█▓▒░░░░░░░░░░░░░░░
+              ░░▓▓▓▒▒▓▓█████▓░░░░░░▓██▓██████░░░░░░░░▓██▓▒▒▓██▓░░░░░░▒▓▓▓▓▓▓▓▓▓██▓░░░░░░░░░░░░░░░░
+    ░░  ░░░░░░░░▒▒▒▓▓███▓▓▓▓▒░░░░░░▓█████▓███▒░░░░░░░██▓▒▒▒▓▓██░░░░░░▒▒▒▓▓▓█▓▓█▓▓▒░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░▒▒▓███▒▓▓▓▓▓░░░░░░░▒█████████▓░░░░░░▓███▓▒▓▓▓██░░░░░░░▒▒▒▓▓██▓▓▓▓▓▒░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░▒▓▓▓▒▒▓▓████████▒░░░▓████████████░░░░░░▓█▓▒▓▓▓█████▓▒░░░▒▓▓▓▓██▓▒▒▓▓▓██▓░░░░░░░░░░░░
+░░░░░░░░░░░░░▓▓▓▓▒▒▒▓▓██▓▓▓▓██▓░▓███████▓▓▓███▓▓▒░░▒▓▓▓▓▒▒▓▓▓▓▒▒▓▓█▓▒▒▒▒▒▒▓█▓▒▒▒▒▓▓██▓▓▒░░░░░░░░░░
+░░░░░░░░░░░░▒▒▒▓▓▒▒▒▓▓█▓▓▓▒▓▓███████████▓▓▓▓████▓▒▒▓▓▓▓▒▒▒▓▓▓▓▒▒▓▓██▓▒▒▒▒▒▒▓█▓▒▒▒▓▓▓█▓▓▓▒░░░░░░░░░
+░░░░░░░░░░░░▒▒▓▓▒▒▒▓▓██▒▒▓▓▓▓▓█▓▓███████████▓█▓▓▒▒▒▒▒▓▓▒▒▓▓▒▓█▒▒▓▓▓▓▒▒▒▒▒▒▓▒▓█▓▒▒▒▒▓██▒▓▓░░░░░░░░░
+░░░░░░░░░░░▒▒▒▓▓▒▒▓▓▓▓█▓▒▓▒▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▓▓█▒▒▒▒▒▓▓▓▓▒▓░░░░░░░░░
+░░░░░░░░░░░▒▒▒▓▒▒▒▓▒▒▓▓█▓▒▓▓▓▓▓▒▒▒▒▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▓▓▓▓▓▒░░░░░░░░
+░░░░░░░░░░░░░▒▓▓▒▓▒▓▓▓▓▓▓▓▓▓▒▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▓▓▒▒▒▓▓▒▓▓▓▓▓▒▒░░░░░░░░░
+""")
                 input("\nPress Enter to continue...")
                 self.golem_fight()
             else:
@@ -527,7 +568,8 @@ You feel a cold breeze coming from inside.""")
                 self.character.xp += 500
                 self.character.gold += 500
                 print("You gained 500 XP points and 500 gold coins")
-                input("\nPress Enter to continue...")
+                self.character.check_level_up()
+                input("\nPress enter to continue...")
                 self.leave_dungeon()
 
     def leave_dungeon(self):
@@ -679,6 +721,8 @@ You feel a cold breeze coming from inside.""")
                 self.visit_shop()
             else:
                 print("You don't have enough gold to buy that.")
+                input("Press Enter to continue...")
+                self.enter_village()
                 self.clear_console()
                 self.visit_shop()
         elif choice == "4":
@@ -719,22 +763,20 @@ You feel a cold breeze coming from inside.""")
                 input("\nPress Enter to continue...")
 
     def check_input(self):
-        print("\nWhat would you like to do? (Type 'Help' for options)")
-        command = input().strip().lower()
+        while not self.close:
+            print("\nWhat would you like to do? (Type 'Help' for options)")
+            command = input().strip().lower()
 
-        if command == "stats":
-            self.previous_state = self.current_state
-            self.current_state = "stats"
-            self.display_stats()
-            self.current_state = self.previous_state
-        elif command == "help":
-            self.clear_console()
-            self.show_help()
-        elif command == "quit":
-            self.close = True
-            print("Exiting the game. Goodbye!")
-        else:
-            print("Unknown command. Type 'Help' to see a list of available commands.")
+            if command == "stats":
+                self.display_stats()
+            elif command == "help":
+                self.clear_console()
+                self.show_help()
+            elif command == "quit":
+                self.close = True
+                print("Exiting the game. Goodbye!")
+            else:
+                print("Unknown command. Type 'Help' to see a list of available commands.")
 
     def display_stats(self):
         self.clear_console()
@@ -769,4 +811,3 @@ You feel a cold breeze coming from inside.""")
     def update(self):
         while not self.close:
             self.check_input()
-

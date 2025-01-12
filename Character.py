@@ -11,3 +11,9 @@ class Character:
         self.intelligence_bonus = intelligence
         self.wisdom_bonus = wisdom
         self.charisma_bonus = charisma
+
+    def check_level_up(self):
+        while self.xp >= 20:
+            self.level += 1
+            self.xp -= 20
+            print(f"Congratulations! {self.name} has leveled up to Level {self.level}!")
